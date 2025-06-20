@@ -3,9 +3,13 @@ set -e
 
 # 1. Aktualizacja i narzędzia
 yum -y update
-yum -y install python3 git amazon-cloudwatch-agent
+yum -y install python3 python3-pip git amazon-cloudwatch-agent awscli amazon-ssm-agent
 pip3 install numpy psutil
-yum -y install awscli
+
+# Włączamy i uruchamiamy usługi
+systemctl enable --now amazon-cloudwatch-agent
+systemctl enable --now amazon-ssm-agent
+
 
 # 2. Konfiguracja CloudWatch Agent (przykład)
 cat >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'EOF'
