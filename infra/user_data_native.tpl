@@ -8,7 +8,7 @@ set -e
 
 while lsof /var/run/yum.pid >/dev/null 2>&1; do
   echo "Waiting for yum lock to clear…"
-  sleep 5
+  sleep 6
 done
 
 # yum -y update
