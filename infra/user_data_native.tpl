@@ -22,9 +22,10 @@ cat >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'EOF'
 EOF
 systemctl enable --now amazon-cloudwatch-agent
 
-# 3. Klonowanie repozytorium z testami
-git clone https://github.com/TwojRepo/tests.git /opt/tests
-cd /opt/tests
+# 3. Klonowanie całego repo
+git clone https://github.com/grzegorzszuper/Praca-magisterska.git /opt/repo
+cd /opt/repo/tests
+
 
 # 4. Wykonanie CPU-bound (benchmark.py)
 for N in 100 500 1000; do
