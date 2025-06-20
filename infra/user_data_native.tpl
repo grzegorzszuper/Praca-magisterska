@@ -11,7 +11,7 @@ while lsof /var/run/yum.pid >/dev/null 2>&1; do
   sleep 5
 done
 
-yum -y update
+# yum -y update
 yum -y install -y python3 python3-pip git amazon-cloudwatch-agent awscli amazon-ssm-agent
 pip3 install numpy psutil
 
