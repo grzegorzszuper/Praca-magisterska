@@ -21,6 +21,7 @@ resource "aws_instance" "test_native" {
   # --- Dodajemy połączenie przez SSM ---
   connection {
     type = "session_manager"
+    host = self.id
   }
 
   provisioner "remote-exec" {
