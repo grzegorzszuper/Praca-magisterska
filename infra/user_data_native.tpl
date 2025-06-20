@@ -5,7 +5,7 @@ set -e
 yum -y update
 yum -y install python3 git amazon-cloudwatch-agent
 pip3 install numpy psutil
-
+yum -y install awscli
 
 # 2. Konfiguracja CloudWatch Agent (przykład)
 cat >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'EOF'
@@ -36,6 +36,7 @@ done
 
 # 5. Eksport logów do S3
 aws s3 cp /var/log/matrix_native.log s3://thesis-logs-${var.env}/native/
+ --region eu-west-3
 
 # 6. Wyłączenie instancji
 shutdown -h now
