@@ -4,6 +4,8 @@ set -e
 # 1. Aktualizacja i narzędzia
 yum -y update
 yum -y install python3 git amazon-cloudwatch-agent
+pip3 install numpy psutil
+
 
 # 2. Konfiguracja CloudWatch Agent (przykład)
 cat >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'EOF'
