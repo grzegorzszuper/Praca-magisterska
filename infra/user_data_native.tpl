@@ -35,9 +35,9 @@ git clone https://github.com/grzegorzszuper/Praca-magisterska.git /opt/repo
 cd /opt/repo/tests
 
 # 4. Wykonanie CPU-bound (benchmark.py)
-for N in 100 500 1000; do
-  python3 benchmark.py --size $N | tee -a /var/log/matrix_native.log
-done
+python3 benchmark.py --size 100 | tee -a /var/log/matrix_native.log
+python3 benchmark.py --size 500 | tee -a /var/log/matrix_native.log
+python3 benchmark.py --size 1000 | tee -a /var/log/matrix_native.log
 
 # 5. Eksport logów do S3 (z regionem)
 aws s3 cp /var/log/matrix_native.log s3://thesis-logs-dev/native/ --region eu-west-3
