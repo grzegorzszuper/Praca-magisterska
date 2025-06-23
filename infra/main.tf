@@ -21,11 +21,17 @@ provider "aws" {
 
 # Na początek testowo: utworzymy bucket S3 na logi
 resource "aws_s3_bucket" "logs" {
-  bucket = "thesis-logs-${var.env}"
+  bucket         = "thesis-logs-${var.env}"
+  force_destroy  = true           # by móc go później łatwo usuwać
+}
+
+# Osobny zasób do ustawienia ACL
+resource "aws_s3_bucket_acl" "logs_acl" {
+  bucket = aws_s3_bucket.logs.id
   acl    = "private"
-  force_destroy = true            # by móc go później łatwo usuwać
 }
 
 output "s3_bucket_name" {
   value = aws_s3_bucket.logs.id
 }
+
