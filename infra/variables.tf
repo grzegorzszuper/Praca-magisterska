@@ -13,3 +13,12 @@ variable "instance_type" {
   type        = string
   default     = "c7i.large"
 }
+
+variable "ssh_public_key_path" {
+  type        = string
+  description = "Ścieżka do pliku .pub dla klucza SSH"
+}
+
+variable "my_ip_cidr" {
+  type        = string
+}
