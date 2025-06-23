@@ -23,8 +23,3 @@ resource "aws_security_group" "thesis_sg" {
     Name = "thesis-sg"
   }
 }
-
-# Pobranie domyślnego VPC
-data "aws_vpc" "default" {
-  default = true
-}
