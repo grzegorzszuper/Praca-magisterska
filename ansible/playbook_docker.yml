@@ -3,17 +3,33 @@
   hosts: ec2_docker
   become: yes
 
-  tasks:
-    - name: Zainstaluj Dockera
-      amazon.aws.package:
-        name: docker
-        state: present
+  vars:
+    s3_bucket_name: thesis-logs-dev  # jeśli nie masz w group_vars
 
+  tasks:
+    - name: Sprawdź ścieżkę do python3 na instancji
+      command: which python3
+      register: python3_path
+
+    - name: Wyświetl ścieżkę python3
+      debug:
+        var: python3_path.stdout
+
+    - name: Zainstaluj Dockera ręcznie (yum)
+      command: yum install -y docker
+      
     - name: Uruchom i włącz Docker
       service:
         name: docker
         state: started
         enabled: true
+
+    - name: Dodaj ec2-user do grupy docker
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
 
     - name: Skopiuj pliki benchmarka do zdalnej maszyny
       copy:
@@ -28,8 +44,24 @@
       args:
         chdir: /home/ec2-user/benchmark/
 
+    - name: Zainstaluj pip
+      command: yum install -y python3-pip
+
+    - name: Utwórz alias pip → pip3
+      file:
+        src: /usr/bin/pip3
+        dest: /usr/bin/pip
+        state: link
+
+    - name: Zainstaluj boto3 i botocore (do obsługi S3)
+      pip:
+        name:
+          - boto3
+          - botocore
+    
     - name: Uruchom benchmark (size 100)
-      command: docker run --rm benchmark-image --size 100
+      become: yes
+      command: docker run --rm benchmark-image python3 benchmark.py --size 100
       register: docker_benchmark_output_100
 
     - name: Zapisz wynik size 100
@@ -46,7 +78,7 @@
         permission: private
 
     - name: Uruchom benchmark (size 500)
-      command: docker run --rm benchmark-image --size 500
+      command: docker run --rm benchmark-image python3 benchmark.py --size 500
       register: docker_benchmark_output_500
 
     - name: Zapisz wynik size 500
@@ -63,7 +95,7 @@
         permission: private
 
     - name: Uruchom benchmark (size 1000)
-      command: docker run --rm benchmark-image --size 1000
+      command: docker run --rm benchmark-image python3 benchmark.py --size 1000
       register: docker_benchmark_output_1000
 
     - name: Zapisz wynik size 1000
@@ -78,4 +110,3 @@
         src: /home/ec2-user/output_docker_1000.log
         mode: put
         permission: private
-

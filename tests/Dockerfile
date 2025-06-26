@@ -11,6 +11,3 @@ WORKDIR /app
 
 # Kopiujemy plik benchmark.py
 COPY benchmark.py .
-
-# Domyślne polecenie
-CMD ["python3", "benchmark.py", "--size", "100"]
