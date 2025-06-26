@@ -1,0 +1,1 @@
+s3_bucket_name: thesis-logs-dev  # lub zmień na właściwą nazwę bucketu z Terraform

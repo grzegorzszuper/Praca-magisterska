@@ -1,0 +1,81 @@
+---
+- name: Uruchomienie benchmarku w Dockerze
+  hosts: ec2_docker
+  become: yes
+
+  tasks:
+    - name: Zainstaluj Dockera
+      amazon.aws.package:
+        name: docker
+        state: present
+
+    - name: Uruchom i włącz Docker
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Skopiuj pliki benchmarka do zdalnej maszyny
+      copy:
+        src: ../tests/
+        dest: /home/ec2-user/benchmark/
+        owner: ec2-user
+        group: ec2-user
+        mode: 0755
+
+    - name: Buduj obraz Dockera
+      command: docker build -t benchmark-image .
+      args:
+        chdir: /home/ec2-user/benchmark/
+
+    - name: Uruchom benchmark (size 100)
+      command: docker run --rm benchmark-image --size 100
+      register: docker_benchmark_output_100
+
+    - name: Zapisz wynik size 100
+      copy:
+        content: "{{ docker_benchmark_output_100.stdout }}"
+        dest: /home/ec2-user/output_docker_100.log
+
+    - name: Wyślij wynik size 100 do S3
+      aws_s3:
+        bucket: "{{ s3_bucket_name }}"
+        object: "output_docker_100.log"
+        src: /home/ec2-user/output_docker_100.log
+        mode: put
+        permission: private
+
+    - name: Uruchom benchmark (size 500)
+      command: docker run --rm benchmark-image --size 500
+      register: docker_benchmark_output_500
+
+    - name: Zapisz wynik size 500
+      copy:
+        content: "{{ docker_benchmark_output_500.stdout }}"
+        dest: /home/ec2-user/output_docker_500.log
+
+    - name: Wyślij wynik size 500 do S3
+      aws_s3:
+        bucket: "{{ s3_bucket_name }}"
+        object: "output_docker_500.log"
+        src: /home/ec2-user/output_docker_500.log
+        mode: put
+        permission: private
+
+    - name: Uruchom benchmark (size 1000)
+      command: docker run --rm benchmark-image --size 1000
+      register: docker_benchmark_output_1000
+
+    - name: Zapisz wynik size 1000
+      copy:
+        content: "{{ docker_benchmark_output_1000.stdout }}"
+        dest: /home/ec2-user/output_docker_1000.log
+
+    - name: Wyślij wynik size 1000 do S3
+      aws_s3:
+        bucket: "{{ s3_bucket_name }}"
+        object: "output_docker_1000.log"
+        src: /home/ec2-user/output_docker_1000.log
+        mode: put
+        permission: private
+
