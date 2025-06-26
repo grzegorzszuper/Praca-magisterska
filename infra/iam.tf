@@ -41,11 +41,15 @@ data "aws_iam_policy_document" "ec2_policy" {
   statement {
     actions = [
       "cloudwatch:PutMetricData",
+      "logs:CreateLogGroup",
       "logs:CreateLogStream",
-      "logs:PutLogEvents"
+      "logs:PutLogEvents",
+      "logs:DescribeLogGroups",
+      "logs:DescribeLogStreams"
     ]
     resources = ["*"]
   }
+
 }
 
 # 5. Dokument assume role, żeby EC2 mogła tę rolę przyjąć
