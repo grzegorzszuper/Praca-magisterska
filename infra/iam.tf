@@ -30,6 +30,15 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 data "aws_iam_policy_document" "ec2_policy" {
   statement {
     actions = [
+      "s3:ListBucket"
+    ]
+    resources = [
+      aws_s3_bucket.logs.arn
+    ]
+  }
+
+  statement {
+    actions = [
       "s3:PutObject",
       "s3:PutObjectAcl"
     ]
