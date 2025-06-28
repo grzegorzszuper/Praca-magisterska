@@ -1,5 +1,5 @@
 resource "aws_instance" "pg_docker" {
-  ami                    = data.aws_ami.amazonlinux2.id
+  ami                    = data.aws_ami.centos7.id
   instance_type          = var.instance_type
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
   key_name               = aws_key_pair.thesis_key.key_name
