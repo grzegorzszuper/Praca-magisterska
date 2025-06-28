@@ -19,6 +19,11 @@ provider "aws" {
   region = var.aws_region         # ustawimy w zmiennej
 }
 
+data "aws_vpc" "default" {
+  default = true
+}
+
+
 # Na początek testowo: utworzymy bucket S3 na logi
 resource "aws_s3_bucket" "logs" {
   bucket         = "thesis-logs-${var.env}"
