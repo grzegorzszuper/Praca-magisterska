@@ -22,17 +22,19 @@ data "aws_subnet" "default" {
   availability_zone = "eu-west-3a"   # Dostosuj jeśli chcesz
 }
 
-# 4. EC2 instance
-resource "aws_instance" "test_native" {
+# 4. EC2 instance postgres
+resource "aws_instance" "pg_native" {
   ami                    = data.aws_ami.amazonlinux2.id
   instance_type          = var.instance_type
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
   key_name               = aws_key_pair.thesis_key.key_name
-  vpc_security_group_ids  = [aws_security_group.thesis_sg.id]
-  subnet_id              = data.aws_subnet.default.id
+  vpc_security_group_ids = [aws_security_group.thesis_sg.id]
+  availability_zone      = "eu-west-3a"
 
   tags = {
-    Name = "thesis-native-${var.env}"
+    Name = "postgres-native"
+    Type = "db-test"
   }
 }
+
 

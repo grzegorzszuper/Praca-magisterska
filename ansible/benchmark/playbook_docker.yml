@@ -70,12 +70,7 @@
         dest: /home/ec2-user/output_docker_100.log
 
     - name: Wyślij wynik size 100 do S3
-      aws_s3:
-        bucket: "{{ s3_bucket_name }}"
-        object: "output_docker_100.log"
-        src: /home/ec2-user/output_docker_100.log
-        mode: put
-        permission: private
+      command: sudo aws s3 cp /home/ec2-user/output_docker_100.log s3://thesis-logs-dev/output_docker_100.log
 
     - name: Uruchom benchmark (size 500)
       command: docker run --rm benchmark-image python3 benchmark.py --size 500
@@ -87,12 +82,9 @@
         dest: /home/ec2-user/output_docker_500.log
 
     - name: Wyślij wynik size 500 do S3
-      aws_s3:
-        bucket: "{{ s3_bucket_name }}"
-        object: "output_docker_500.log"
-        src: /home/ec2-user/output_docker_500.log
-        mode: put
-        permission: private
+      command: sudo aws s3 cp /home/ec2-user/output_docker_500.log s3://thesis-logs-dev/output_docker_500.log
+
+        
 
     - name: Uruchom benchmark (size 1000)
       command: docker run --rm benchmark-image python3 benchmark.py --size 1000
@@ -104,9 +96,6 @@
         dest: /home/ec2-user/output_docker_1000.log
 
     - name: Wyślij wynik size 1000 do S3
-      aws_s3:
-        bucket: "{{ s3_bucket_name }}"
-        object: "output_docker_1000.log"
-        src: /home/ec2-user/output_docker_1000.log
-        mode: put
-        permission: private
+      command: sudo aws s3 cp /home/ec2-user/output_docker_1000.log s3://thesis-logs-dev/output_docker_1000.log
+
+       
