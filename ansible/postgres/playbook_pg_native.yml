@@ -1,60 +1,44 @@
 ---
-- name: Uruchomienie PostgreSQL 15 natywnie na Amazon Linux 2
+- name: Uruchomienie PostgreSQL 13 natywnie
   hosts: all
   become: yes
 
   tasks:
-    - name: Wymagane pakiety
-      yum:
-        name: 
-          - wget
-          - ca-certificates
-        state: present
+    - name: Włącz PostgreSQL 13 przez amazon-linux-extras
+      command: amazon-linux-extras enable postgresql13
 
-    - name: Dodaj repozytorium PostgreSQL 15
-      get_url:
-        url: https://download.postgresql.org/pub/repos/yum/15/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-        dest: /tmp/pgdg-redhat-repo-latest.noarch.rpm
+    - name: Zainstaluj PostgreSQL 13 i narzędzia
+      command: yum install -y postgresql postgresql-server postgresql-contrib
 
-    - name: Instalacja repozytorium PGDG
-      command: rpm -ivh /tmp/pgdg-redhat-repo-latest.noarch.rpm
+    - name: Zainstaluj pip
+      command: yum install -y python3-pip
+
+    - name: Zainstaluj psycopg2
+      command: pip3 install psycopg2-binary
+
+    - name: Inicjalizuj bazę danych PostgreSQL
+      command: postgresql-setup initdb
       args:
-        creates: /etc/yum.repos.d/pgdg-redhat-all.repo
+        creates: /var/lib/pgsql/data/PG_VERSION
 
-    - name: Wyłącz domyślny PostgreSQL z Amazon Linux 2
-      shell: amazon-linux-extras disable postgresql
-
-    - name: Zainstaluj PostgreSQL 15 i narzędzia
-      yum:
-        name:
-          - postgresql15
-          - postgresql15-server
-          - postgresql15-contrib
-        state: present
-
-    - name: Inicjalizuj bazę danych
-      command: /usr/pgsql-15/bin/postgresql-15-setup initdb
-      args:
-        creates: /var/lib/pgsql/15/data/PG_VERSION
-
-    - name: Uruchom i włącz usługę PostgreSQL
+    - name: Uruchom i włącz PostgreSQL
       service:
-        name: postgresql-15
+        name: postgresql
         state: started
         enabled: true
 
-    - name: Utwórz bazę benchmarkdb
+    - name: Utwórz bazę testową benchmarkdb
       become_user: postgres
       postgresql_db:
         name: benchmarkdb
 
-    - name: Inicjalizacja pgbench
+    - name: Inicjalizacja pgbench (50 = ~1M rekordów)
       become_user: postgres
-      shell: /usr/pgsql-15/bin/pgbench -i -s 50 benchmarkdb
+      shell: pgbench -i -s 50 benchmarkdb
 
-    - name: Test pgbench
+    - name: Wykonaj test pgbench (10 klientów, 4 wątki, 60 sek)
       become_user: postgres
-      shell: /usr/pgsql-15/bin/pgbench -c 10 -j 4 -T 60 benchmarkdb > /home/ec2-user/pg_result.log
+      shell: pgbench -c 10 -j 4 -T 60 benchmarkdb > /var/lib/pgsql/pg_result.log
 
     - name: Wyślij wynik do S3
-      command: aws s3 cp /home/ec2-user/pg_result.log s3://thesis-logs-dev/postgres/output_pg_native.log
+      command: aws s3 cp /var/lib/pgsql/pg_result.log s3://thesis-logs-dev/postgres/output_pg_native.log

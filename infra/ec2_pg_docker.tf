@@ -17,7 +17,7 @@ resource "aws_instance" "pg_docker" {
   availability_zone           = "eu-west-3a"
 
   tags = {
-    Name = "postgres-native"
+    Name = "postgres-docker"
     Type = "db-test"
   }
 }
