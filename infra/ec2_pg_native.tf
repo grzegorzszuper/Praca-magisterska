@@ -1,13 +1,13 @@
 # infra/native.tf
 
 # 1. Pobranie najnowszego Amazon Linux 2 AMI
-data "aws_ami" "amazonlinux2" {
+data "aws_ami" "centos7" {
   most_recent = true
-  owners      = ["amazon"]
+  owners      = ["679593333241"] # oficjalny CentOS 7 od AWS Marketplace
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["CentOS Linux 7 x86_64 HVM EBS*"]
   }
 }
 
@@ -24,7 +24,7 @@ data "aws_subnet" "default" {
 
 # 4. EC2 instance postgres
 resource "aws_instance" "pg_native" {
-  ami                    = data.aws_ami.amazonlinux2.id
+  ami                    = data.aws_ami.centos7.id
   instance_type          = var.instance_type
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
   key_name               = aws_key_pair.thesis_key.key_name

@@ -1,0 +1,56 @@
+- name: Install PostgreSQL via Docker
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Docker (ręcznie)
+      command: yum install -y docker
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Pull PostgreSQL 15.5 image
+      command: docker pull postgres:15.5
+
+    - name: Usuń istniejący kontener pg-docker (jeśli istnieje)
+      shell: |
+        docker rm -f pg-docker || true
+
+
+    - name: Run PostgreSQL container
+      command: >
+        docker run -d --name pg-docker
+        -e POSTGRES_PASSWORD=example
+        -e POSTGRES_DB=benchmarkdb
+        -p 5432:5432
+        postgres:15.5
+
+    - name: Wait for container PostgreSQL to start
+      wait_for:
+        port: 5432
+        delay: 10
+
+    - name: Install PostgreSQL client + pgbench
+      command: yum install -y postgresql postgresql-contrib
+
+    - name: Run pgbench init inside container
+      shell: |
+        docker exec -e PGPASSWORD=example pg-docker \
+        pgbench -i -s 50 -U postgres benchmarkdb
+
+
+    - name: Run pgbench benchmark inside container
+      shell: |
+        docker exec -e PGPASSWORD=example pg-docker \
+        pgbench -c 10 -j 4 -T 60 -U postgres benchmarkdb > /home/ec2-user/pg_result.log
+
+    - name: Wyślij logi do S3
+      command: sudo aws s3 cp /home/ec2-user/pg_result.log s3://thesis-logs-dev/postgres/output_pg_docker.log

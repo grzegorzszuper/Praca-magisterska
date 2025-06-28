@@ -1,0 +1,53 @@
+---
+- name: Uruchomienie PostgreSQL 15 natywnie
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Zainstaluj wymagane pakiety
+      command: yum install -y wget ca-certificates
+
+    - name: Pobierz repozytorium PGDG dla PostgreSQL 15
+      get_url:
+        url: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        dest: /tmp/pgdg-redhat-repo-latest.noarch.rpm
+
+    - name: Zainstaluj repozytorium PGDG RPM
+      command: rpm -ivh /tmp/pgdg-redhat-repo-latest.noarch.rpm
+      args:
+        creates: /etc/yum.repos.d/pgdg-redhat-all.repo
+
+    - name: Zainstaluj PostgreSQL 15 i narzędzia
+      yum:
+        name:
+          - postgresql15
+          - postgresql15-server
+          - postgresql15-contrib
+        state: present
+
+    - name: Inicjalizuj bazę danych PostgreSQL
+      command: /usr/pgsql-15/bin/postgresql-15-setup initdb
+      args:
+        creates: /var/lib/pgsql/15/data/PG_VERSION
+
+    - name: Uruchom i włącz PostgreSQL
+      service:
+        name: postgresql-15
+        state: started
+        enabled: true
+
+    - name: Utwórz bazę testową benchmarkdb
+      become_user: postgres
+      postgresql_db:
+        name: benchmarkdb
+
+    - name: Inicjalizacja pgbench (50 = ~1M rekordów)
+      become_user: postgres
+      shell: /usr/pgsql-15/bin/pgbench -i -s 50 benchmarkdb
+
+    - name: Wykonaj test pgbench (10 klientów, 4 wątki, 60 sek)
+      become_user: postgres
+      shell: /usr/pgsql-15/bin/pgbench -c 10 -j 4 -T 60 benchmarkdb > /home/ec2-user/pg_result.log
+
+    - name: Wyślij wynik do S3
+      command: aws s3 cp /home/ec2-user/pg_result.log s3://thesis-logs-dev/postgres/output_pg_native.log
