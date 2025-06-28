@@ -11,15 +11,6 @@ data "aws_subnet" "default" {
   availability_zone = "eu-west-3a"   # Dostosuj jeśli chcesz
 }
 
-data "aws_ami" "amazonlinux2" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
 
 resource "aws_instance" "pg_native" {
   ami                         = data.aws_ami.amazonlinux2.id
