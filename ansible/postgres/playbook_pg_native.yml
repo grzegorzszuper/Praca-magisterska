@@ -1,21 +1,28 @@
 ---
-- name: Uruchomienie PostgreSQL 15 natywnie
+- name: Uruchomienie PostgreSQL 15 natywnie na Amazon Linux 2
   hosts: all
   become: yes
 
   tasks:
-    - name: Zainstaluj wymagane pakiety
-      command: yum install -y wget ca-certificates
+    - name: Wymagane pakiety
+      yum:
+        name: 
+          - wget
+          - ca-certificates
+        state: present
 
-    - name: Pobierz repozytorium PGDG dla PostgreSQL 15
+    - name: Dodaj repozytorium PostgreSQL 15
       get_url:
-        url: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        url: https://download.postgresql.org/pub/repos/yum/15/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
         dest: /tmp/pgdg-redhat-repo-latest.noarch.rpm
 
-    - name: Zainstaluj repozytorium PGDG RPM
+    - name: Instalacja repozytorium PGDG
       command: rpm -ivh /tmp/pgdg-redhat-repo-latest.noarch.rpm
       args:
         creates: /etc/yum.repos.d/pgdg-redhat-all.repo
+
+    - name: Wyłącz domyślny PostgreSQL z Amazon Linux 2
+      shell: amazon-linux-extras disable postgresql
 
     - name: Zainstaluj PostgreSQL 15 i narzędzia
       yum:
@@ -25,27 +32,27 @@
           - postgresql15-contrib
         state: present
 
-    - name: Inicjalizuj bazę danych PostgreSQL
+    - name: Inicjalizuj bazę danych
       command: /usr/pgsql-15/bin/postgresql-15-setup initdb
       args:
         creates: /var/lib/pgsql/15/data/PG_VERSION
 
-    - name: Uruchom i włącz PostgreSQL
+    - name: Uruchom i włącz usługę PostgreSQL
       service:
         name: postgresql-15
         state: started
         enabled: true
 
-    - name: Utwórz bazę testową benchmarkdb
+    - name: Utwórz bazę benchmarkdb
       become_user: postgres
       postgresql_db:
         name: benchmarkdb
 
-    - name: Inicjalizacja pgbench (50 = ~1M rekordów)
+    - name: Inicjalizacja pgbench
       become_user: postgres
       shell: /usr/pgsql-15/bin/pgbench -i -s 50 benchmarkdb
 
-    - name: Wykonaj test pgbench (10 klientów, 4 wątki, 60 sek)
+    - name: Test pgbench
       become_user: postgres
       shell: /usr/pgsql-15/bin/pgbench -c 10 -j 4 -T 60 benchmarkdb > /home/ec2-user/pg_result.log
 
