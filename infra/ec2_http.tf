@@ -1,3 +1,13 @@
+data "aws_ami" "amazonlinux2" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+}
+
 resource "aws_instance" "http_native" {
   ami                    = "ami-0df6cfabfbe438a58"
   instance_type          = var.instance_type
