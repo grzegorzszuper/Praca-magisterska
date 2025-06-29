@@ -1,4 +1,9 @@
 # Security Group dla SSH dostępu do EC2
+
+data "aws_vpc" "default" {
+  default = true
+}
+
 resource "aws_security_group" "thesis_sg" {
   name        = "thesis-sg"
   description = "Security group for SSH access to thesis EC2"
