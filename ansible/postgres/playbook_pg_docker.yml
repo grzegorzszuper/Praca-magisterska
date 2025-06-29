@@ -30,12 +30,12 @@
         docker run -d --name pg-docker
         -e POSTGRES_PASSWORD=example
         -e POSTGRES_DB=benchmarkdb
-        -p 5432:5432
+        -p 5433:5433
         postgres:13
 
     - name: Poczekaj na uruchomienie kontenera PostgreSQL
       wait_for:
-        port: 5432
+        port: 5433
         delay: 10
 
     - name: Zainstaluj klienta PostgreSQL i pgbench
