@@ -1,15 +1,5 @@
-data "aws_ami" "amazonlinux2" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
 resource "aws_instance" "http_native" {
-  ami                    = "ami-0df6cfabfbe438a58"
+  ami = data.aws_ami.amazonlinux2.id
   instance_type          = var.instance_type
   key_name               = aws_key_pair.thesis_key.key_name
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
@@ -24,7 +14,7 @@ resource "aws_instance" "http_native" {
 }
 
 resource "aws_instance" "http_docker" {
-  ami                    = "ami-0df6cfabfbe438a58"
+  ami = data.aws_ami.amazonlinux2.id
   instance_type          = var.instance_type
   key_name               = aws_key_pair.thesis_key.key_name
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
@@ -39,7 +29,7 @@ resource "aws_instance" "http_docker" {
 }
 
 resource "aws_instance" "http_client" {
-  ami                    = "ami-0df6cfabfbe438a58"
+  ami = data.aws_ami.amazonlinux2.id
   instance_type          = var.instance_type
   key_name               = aws_key_pair.thesis_key.key_name
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
