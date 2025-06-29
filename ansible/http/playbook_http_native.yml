@@ -1,0 +1,27 @@
+---
+- name: Setup nginx on http-native
+  hosts: http_native
+  become: true
+
+  tasks:
+    - name: Install nginx
+      yum:
+        name: nginx
+        state: present
+
+    - name: Start and enable nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Create test file for benchmark
+      copy:
+        dest: /usr/share/nginx/html/test.html
+        content: "Hello from native nginx!"
+
+    - name: Open port 80 in firewall (optional for Amazon Linux)
+      shell: |
+        firewall-cmd --add-service=http --permanent || true
+        firewall-cmd --reload || true
+      when: ansible_facts['os_family'] == 'RedHat'
