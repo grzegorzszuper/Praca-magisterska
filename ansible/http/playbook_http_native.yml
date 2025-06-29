@@ -1,27 +1,20 @@
 ---
-- name: Setup nginx on http-native
+- name: Uruchomienie nginx natywnie na Amazon Linux 2
   hosts: http_native
-  become: true
+  become: yes
 
   tasks:
-    - name: Install nginx
-      yum:
-        name: nginx
-        state: present
+    - name: Włącz nginx1 przez amazon-linux-extras
+      command: amazon-linux-extras enable nginx1
 
-    - name: Start and enable nginx
-      systemd:
-        name: nginx
-        state: started
-        enabled: true
+    - name: Zainstaluj nginx przez yum
+      command: yum install -y nginx
 
-    - name: Create test file for benchmark
+    - name: Uruchom i włącz nginx
+      command: systemctl enable --now nginx
+
+    - name: Stwórz plik testowy
       copy:
         dest: /usr/share/nginx/html/test.html
         content: "Hello from native nginx!"
 
-    - name: Open port 80 in firewall (optional for Amazon Linux)
-      shell: |
-        firewall-cmd --add-service=http --permanent || true
-        firewall-cmd --reload || true
-      when: ansible_facts['os_family'] == 'RedHat'
