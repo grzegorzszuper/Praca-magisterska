@@ -1,0 +1,37 @@
+---
+- name: I/O Benchmark - Native EC2
+  hosts: io_native
+  become: yes
+
+  vars:
+    fio_test_file: /home/ec2-user/fio_write.fio
+    fio_log_file: /home/ec2-user/io_output_write_native.log
+    s3_path: s3://thesis-logs-dev/io/io_output_write_native.log
+
+  tasks:
+    - name: Install fio
+      yum:
+        name: fio
+        state: present
+
+    - name: Create fio test definition
+      copy:
+        dest: "{{ fio_test_file }}"
+        content: |
+          [write-test]
+          name=Sequential Write Test
+          filename=seq_write_test.dat
+          ioengine=libaio
+          direct=1
+          bs=1m
+          size=1G
+          rw=write
+          numjobs=1
+          runtime=60
+          time_based
+
+    - name: Run fio write benchmark
+      shell: fio "{{ fio_test_file }}" > "{{ fio_log_file }}"
+
+    - name: Upload fio output to S3
+      shell: aws s3 cp "{{ fio_log_file }}" "{{ s3_path }}"
