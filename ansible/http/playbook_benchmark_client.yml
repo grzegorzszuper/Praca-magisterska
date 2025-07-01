@@ -1,0 +1,68 @@
+---
+- name: Benchmark HTTP serwerów z instancji http-client
+  hosts: http_client
+  become: yes
+
+  vars:
+    http_native_ip: 13.36.236.201
+    http_docker_ip: 51.44.215.212
+    threads: 4
+    durations: [100, 200, 300]
+    connections: [50, 100, 300, 500, 1000]
+    repetitions: [1, 2, 3]
+    s3_path: s3://thesis-logs-dev/http
+
+  tasks:
+    - name: Zainstaluj wymagane pakiety przez command
+      command: yum install -y git gcc make lua-devel unzip
+
+    - name: Sklonuj repozytorium wrk
+      git:
+        repo: https://github.com/wg/wrk.git
+        dest: /home/ec2-user/wrk
+
+    - name: Skompiluj wrk
+      shell: make
+      args:
+        chdir: /home/ec2-user/wrk
+
+    - name: Uruchom benchmarki dla http-native (4 powtórzenia)
+      shell: ./wrk -t{{ threads }} -c{{ item.0 }} -d{{ item.1 }}s http://{{ http_native_ip }}/test.html > /home/ec2-user/wrk_output_native_c{{ item.0 }}_d{{ item.1 }}_run{{ item.2 }}.log
+      args:
+        chdir: /home/ec2-user/wrk
+      with_nested:
+        - "{{ connections }}"
+        - "{{ durations }}"
+        - "{{ repetitions }}"
+        
+    - name: Poczekaj 5 sekund
+      pause:
+        seconds: 5
+
+    - name: Uruchom benchmarki dla http-docker (4 powtórzenia)
+      shell: ./wrk -t{{ threads }} -c{{ item.0 }} -d{{ item.1 }}s http://{{ http_docker_ip }}/test.html > /home/ec2-user/wrk_output_docker_c{{ item.0 }}_d{{ item.1 }}_run{{ item.2 }}.log
+      args:
+        chdir: /home/ec2-user/wrk
+      with_nested:
+        - "{{ connections }}"
+        - "{{ durations }}"
+        - "{{ repetitions }}"
+
+    - name: Poczekaj 5 sekund
+      pause:
+        seconds: 5
+
+
+    - name: Wyślij logi native do S3
+      shell: aws s3 cp /home/ec2-user/wrk_output_native_c{{ item.0 }}_d{{ item.1 }}_run{{ item.2 }}.log {{ s3_path }}/wrk_output_native_c{{ item.0 }}_d{{ item.1 }}_run{{ item.2 }}.log
+      with_nested:
+        - "{{ connections }}"
+        - "{{ durations }}"
+        - "{{ repetitions }}"
+
+    - name: Wyślij logi docker do S3
+      shell: aws s3 cp /home/ec2-user/wrk_output_docker_c{{ item.0 }}_d{{ item.1 }}_run{{ item.2 }}.log {{ s3_path }}/wrk_output_docker_c{{ item.0 }}_d{{ item.1 }}_run{{ item.2 }}.log
+      with_nested:
+        - "{{ connections }}"
+        - "{{ durations }}"
+        - "{{ repetitions }}"
