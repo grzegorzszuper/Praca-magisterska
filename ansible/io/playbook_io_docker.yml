@@ -1,0 +1,47 @@
+---
+- name: I/O Benchmark - Docker EC2
+  hosts: io_docker
+  become: yes
+
+  vars:
+    fio_test_file: /tmp/fio_write.fio
+    fio_log_file: /tmp/io_output_write_docker.log
+    s3_path: s3://thesis-logs-dev/io/io_output_write_docker.log
+    container_name: fio_test_container
+
+  tasks:
+    - name: Install required packages (Docker and fio)
+      command: yum install -y docker fio
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create fio test file
+      copy:
+        dest: "{{ fio_test_file }}"
+        content: |
+          [write-test]
+          name=Sequential Write Test
+          filename=/mnt/test_file.dat
+          ioengine=libaio
+          direct=1
+          bs=1m
+          size=1G
+          rw=write
+          numjobs=1
+          runtime=60
+          time_based
+
+    - name: Run fio test in Docker container
+      shell: |
+        docker run --rm \
+          --name {{ container_name }} \
+          -v /tmp:/mnt \
+          amazonlinux:2 \
+          sh -c "yum install -y fio > /dev/null && fio /mnt/fio_write.fio > /mnt/io_output_write_docker.log"
+
+    - name: Upload result to S3
+      shell: aws s3 cp "{{ fio_log_file }}" "{{ s3_path }}"

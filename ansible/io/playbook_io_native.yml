@@ -6,13 +6,11 @@
   vars:
     fio_test_file: /home/ec2-user/fio_write.fio
     fio_log_file: /home/ec2-user/io_output_write_native.log
-    s3_path: s3://thesis-logs-dev/io/io_output_write_native.log
+    s3_path: s3://thesis-logs-dev/IO/io_output_write_native.log
 
   tasks:
-    - name: Install fio
-      yum:
-        name: fio
-        state: present
+    - name: Install fio via yum
+      command: yum install -y fio
 
     - name: Create fio test definition
       copy:
