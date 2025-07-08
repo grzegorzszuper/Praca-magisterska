@@ -1,4 +1,3 @@
-- import_playbook: cloudwatch-agent.yml
 
 - hosts: ec2
   become: yes
