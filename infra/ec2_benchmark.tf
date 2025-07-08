@@ -11,11 +11,6 @@ data "aws_ami" "amazonlinux2" {
   }
 }
 
-# 2. Pobranie domyślnego VPC (jeśli chcesz użyć default VPC)
-data "aws_vpc" "default" {
-  default = true
-}
-
 # 3. Pobranie domyślnego subnetu (dla default VPC)
 data "aws_subnet" "default" {
   default_for_az = true
