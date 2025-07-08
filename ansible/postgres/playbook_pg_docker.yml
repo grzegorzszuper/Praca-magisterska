@@ -41,15 +41,36 @@
     - name: Zainstaluj klienta PostgreSQL i pgbench
       command: yum install -y postgresql postgresql-contrib
 
-    - name: Inicjalizuj bazę benchmarkdb wewnątrz kontenera
-      shell: >
-        docker exec -e PGPASSWORD=example pg-docker
-        pgbench -i -s 50 -U postgres benchmarkdb
+    - name: Dodatkowe testy pgbench - warianty docker
+      block:
+        - name: Inicjalizuj pgbench - {{ label }}
+          shell: >
+            docker exec -e PGPASSWORD=example pg-docker
+            pgbench -i -s {{ scale }} -U postgres benchmarkdb
 
-    - name: Wykonaj test pgbench i zapisz wynik do pliku
-      shell: >
-        docker exec -e PGPASSWORD=example pg-docker
-        pgbench -c 10 -j 4 -T 60 -U postgres benchmarkdb > /home/ec2-user/pg_result.log
+        - name: Uruchom test pgbench - {{ label }}
+          shell: >
+            docker exec -e PGPASSWORD=example pg-docker
+            pgbench -c {{ clients }} -j {{ threads }} -T 60 -U postgres benchmarkdb >
+            /home/ec2-user/pg_result_{{ label }}.log
 
-    - name: Wyślij wynik do S3
-      command: aws s3 cp /home/ec2-user/pg_result.log s3://thesis-logs-dev/postgres/output_pg_docker.log
+        - name: Wyślij log do S3 - {{ label }}
+          command: >
+            aws s3 cp /home/ec2-user/pg_result_{{ label }}.log
+            s3://thesis-logs-dev/postgres/output_pg_docker_{{ label }}.log
+      loop:
+        - { label: "1c_1j_s1", clients: 1, threads: 1, scale: 1 }
+        - { label: "5c_2j_s1", clients: 5, threads: 2, scale: 1 }
+        - { label: "10c_4j_s1", clients: 10, threads: 4, scale: 1 }
+        - { label: "20c_4j_s1", clients: 20, threads: 4, scale: 1 }
+        - { label: "50c_8j_s1", clients: 50, threads: 8, scale: 1 }
+        - { label: "1c_1j_s50", clients: 1, threads: 1, scale: 50 }
+        - { label: "5c_2j_s50", clients: 5, threads: 2, scale: 50 }
+        - { label: "10c_4j_s50", clients: 10, threads: 4, scale: 50 }
+        - { label: "20c_4j_s50", clients: 20, threads: 4, scale: 50 }
+        - { label: "50c_8j_s50", clients: 50, threads: 8, scale: 50 }
+        - { label: "1c_1j_s100", clients: 1, threads: 1, scale: 100 }
+        - { label: "5c_2j_s100", clients: 5, threads: 2, scale: 100 }
+        - { label: "10c_4j_s100", clients: 10, threads: 4, scale: 100 }
+        - { label: "20c_4j_s100", clients: 20, threads: 4, scale: 100 }
+        - { label: "50c_8j_s100", clients: 50, threads: 8, scale: 100 }

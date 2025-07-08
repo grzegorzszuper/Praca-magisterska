@@ -84,8 +84,6 @@
     - name: Wyślij wynik size 500 do S3
       command: sudo aws s3 cp /home/ec2-user/output_docker_500.log s3://thesis-logs-dev/output_docker_500.log
 
-        
-
     - name: Uruchom benchmark (size 1000)
       command: docker run --rm benchmark-image python3 benchmark.py --size 1000
       register: docker_benchmark_output_1000
