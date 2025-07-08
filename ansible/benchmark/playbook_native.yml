@@ -21,27 +21,27 @@
         version: main
 
     - name: Uruchomienie benchmark.py dla size 100
-      shell: python3 /home/ec2-user/benchmark/tests/benchmark.py --size 100 > /home/ec2-user/benchmark/output_100.log
+      shell: python3 /home/ec2-user/benchmark/tests/benchmark.py --size 100 > /home/ec2-user/benchmark/output_100_docker.log
       args:
         chdir: /home/ec2-user/benchmark
 
 
     - name: Uruchomienie benchmark.py dla size 500
-      shell: python3 /home/ec2-user/benchmark/tests/benchmark.py --size 500 > /home/ec2-user/benchmark/output_500.log
+      shell: python3 /home/ec2-user/benchmark/tests/benchmark.py --size 500 > /home/ec2-user/benchmark/output_500_docker.log
       args:
         chdir: /home/ec2-user/benchmark
 
     - name: Uruchomienie benchmark.py dla size 1000
-      shell: python3 /home/ec2-user/benchmark/tests/benchmark.py --size 1000 > /home/ec2-user/benchmark/output_1000.log
+      shell: python3 /home/ec2-user/benchmark/tests/benchmark.py --size 1000 > /home/ec2-user/benchmark/output_1000_docker.log
       args:
         chdir: /home/ec2-user/benchmark
 
 
     - name: Wysyłka logów do S3
-      command: aws s3 cp /home/ec2-user/benchmark/output_100.log s3://thesis-logs-dev/
+      command: aws s3 cp /home/ec2-user/benchmark/output_100_docker.log s3://thesis-logs-dev/
     
     - name: Wysyłka logów do S3 (500)
-      command: aws s3 cp /home/ec2-user/benchmark/output_500.log s3://thesis-logs-dev/
+      command: aws s3 cp /home/ec2-user/benchmark/output_500_docker.log s3://thesis-logs-dev/
     
     - name: Wysyłka logów do S3 (1000)
-      command: aws s3 cp /home/ec2-user/benchmark/output_1000.log s3://thesis-logs-dev/
+      command: aws s3 cp /home/ec2-user/benchmark/output_1000_docker.log s3://thesis-logs-dev/
