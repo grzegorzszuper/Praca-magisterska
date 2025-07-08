@@ -19,7 +19,6 @@ resource "aws_iam_role_policy_attachment" "ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-
 # 3. Profile dla instancji EC2
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "thesis-ec2-profile"
@@ -47,18 +46,6 @@ data "aws_iam_policy_document" "ec2_policy" {
       "${aws_s3_bucket.logs.arn}/*"
     ]
   }
-  statement {
-    actions = [
-      "cloudwatch:PutMetricData",
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams"
-    ]
-    resources = ["*"]
-  }
-
 }
 
 # 5. Dokument assume role, żeby EC2 mogła tę rolę przyjąć

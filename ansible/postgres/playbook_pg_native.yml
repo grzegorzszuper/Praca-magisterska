@@ -1,7 +1,25 @@
 ---
 - name: Uruchomienie PostgreSQL 13 natywnie
-  hosts: all
+  hosts: ec2
   become: yes
+
+  vars:
+    pgbench_variants:
+      - { label: "1c_1j_s1", clients: 1, threads: 1, scale: 1 }
+      - { label: "5c_2j_s1", clients: 5, threads: 2, scale: 1 }
+      - { label: "10c_4j_s1", clients: 10, threads: 4, scale: 1 }
+      - { label: "20c_4j_s1", clients: 20, threads: 4, scale: 1 }
+      - { label: "50c_8j_s1", clients: 50, threads: 8, scale: 1 }
+      - { label: "1c_1j_s50", clients: 1, threads: 1, scale: 50 }
+      - { label: "5c_2j_s50", clients: 5, threads: 2, scale: 50 }
+      - { label: "10c_4j_s50", clients: 10, threads: 4, scale: 50 }
+      - { label: "20c_4j_s50", clients: 20, threads: 4, scale: 50 }
+      - { label: "50c_8j_s50", clients: 50, threads: 8, scale: 50 }
+      - { label: "1c_1j_s100", clients: 1, threads: 1, scale: 100 }
+      - { label: "5c_2j_s100", clients: 5, threads: 2, scale: 100 }
+      - { label: "10c_4j_s100", clients: 10, threads: 4, scale: 100 }
+      - { label: "20c_4j_s100", clients: 20, threads: 4, scale: 100 }
+      - { label: "50c_8j_s100", clients: 50, threads: 8, scale: 100 }
 
   tasks:
     - name: Włącz PostgreSQL 13 przez amazon-linux-extras
@@ -32,31 +50,10 @@
       postgresql_db:
         name: benchmarkdb
 
-    - name: Testy pgbench - warianty native
-      block:
-        - name: Inicjalizuj pgbench - {{ label }}
-          become_user: postgres
-          shell: pgbench -i -s {{ scale }} benchmarkdb
-
-        - name: Uruchom test pgbench - {{ label }}
-          become_user: postgres
-          shell: pgbench -c {{ clients }} -j {{ threads }} -T 60 benchmarkdb > /var/lib/pgsql/pg_result_{{ label }}.log
-
-        - name: Wyślij log do S3 - {{ label }}
-          command: aws s3 cp /var/lib/pgsql/pg_result_{{ label }}.log s3://thesis-logs-dev/postgres/output_pg_native_{{ label }}.log
-      loop:
-        - { label: "1c_1j_s1", clients: 1, threads: 1, scale: 1 }
-        - { label: "5c_2j_s1", clients: 5, threads: 2, scale: 1 }
-        - { label: "10c_4j_s1", clients: 10, threads: 4, scale: 1 }
-        - { label: "20c_4j_s1", clients: 20, threads: 4, scale: 1 }
-        - { label: "50c_8j_s1", clients: 50, threads: 8, scale: 1 }
-        - { label: "1c_1j_s50", clients: 1, threads: 1, scale: 50 }
-        - { label: "5c_2j_s50", clients: 5, threads: 2, scale: 50 }
-        - { label: "10c_4j_s50", clients: 10, threads: 4, scale: 50 }
-        - { label: "20c_4j_s50", clients: 20, threads: 4, scale: 50 }
-        - { label: "50c_8j_s50", clients: 50, threads: 8, scale: 50 }
-        - { label: "1c_1j_s100", clients: 1, threads: 1, scale: 100 }
-        - { label: "5c_2j_s100", clients: 5, threads: 2, scale: 100 }
-        - { label: "10c_4j_s100", clients: 10, threads: 4, scale: 100 }
-        - { label: "20c_4j_s100", clients: 20, threads: 4, scale: 100 }
-        - { label: "50c_8j_s100", clients: 50, threads: 8, scale: 100 }
+    - name: Uruchom testy pgbench i zapisz wyniki
+      become_user: postgres
+      shell: |
+        pgbench -i -s {{ item.scale }} benchmarkdb && \
+        pgbench -c {{ item.clients }} -j {{ item.threads }} -T 60 benchmarkdb > /var/lib/pgsql/pg_result_{{ item.label }}.log && \
+        aws s3 cp /var/lib/pgsql/pg_result_{{ item.label }}.log s3://thesis-logs-dev/postgres/output_pg_native_{{ item.label }}.log
+      loop: "{{ pgbench_variants }}"

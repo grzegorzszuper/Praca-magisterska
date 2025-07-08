@@ -19,13 +19,4 @@ provider "aws" {
   region = var.aws_region         # ustawimy w zmiennej
 }
 
-# Na początek testowo: utworzymy bucket S3 na logi
-resource "aws_s3_bucket" "logs" {
-  bucket         = "thesis-logs-${var.env}"
-  force_destroy  = true           # by móc go później łatwo usuwać
-}
-
-output "s3_bucket_name" {
-  value = aws_s3_bucket.logs.id
-}
 
