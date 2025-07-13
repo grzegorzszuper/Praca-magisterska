@@ -19,6 +19,9 @@
     - name: Install fio via yum
       command: yum install -y fio
 
+    - name: Cleanup old fio and log files before tests
+      shell: rm -f /home/ec2-user/*.dat /home/ec2-user/*.log
+
     - name: Create fio definition file for each variant
       copy:
         dest: "/home/ec2-user/fio_{{ item.label }}.fio"
@@ -44,3 +47,12 @@
     - name: Upload fio result logs to S3 for each variant
       shell: aws s3 cp "/home/ec2-user/io_output_{{ item.label }}_native.log" "{{ s3_base_path }}/io_output_{{ item.label }}_native.log"
       loop: "{{ io_variants }}"
+
+    - name: Remove fio log files after upload
+      file:
+        path: "/home/ec2-user/io_output_{{ item.label }}_native.log"
+        state: absent
+      loop: "{{ io_variants }}"
+
+    - name: Remove fio data files after all tests
+      shell: rm -f /home/ec2-user/*.dat
