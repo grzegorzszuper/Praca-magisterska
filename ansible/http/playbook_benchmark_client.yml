@@ -6,7 +6,7 @@
   vars:
     http_native_ip: 13.38.38.143
     http_docker_ip: 15.237.41.151
-    threads: 4
+    threads: 2
     durations: [180]
     connections: [50, 100, 300, 500, 1000]
     repetitions: [1, 2, 3]
@@ -26,7 +26,18 @@
       args:
         chdir: /home/ec2-user/wrk
 
-    - name: Uruchom benchmarki dla http-native (4 powtórzenia)
+    - name: 🔥 Warm-up dla http-native (1 raz)
+      shell: ./wrk -t{{ threads }} -c10 -d10s http://{{ http_native_ip }}/test.html > /home/ec2-user/wrk_output_warmup_native.log
+      args:
+        chdir: /home/ec2-user/wrk
+
+    - name: 🔥 Warm-up dla http-docker (1 raz)
+      shell: ./wrk -t{{ threads }} -c10 -d10s http://{{ http_docker_ip }}/test.html > /home/ec2-user/wrk_output_warmup_docker.log
+      args:
+        chdir: /home/ec2-user/wrk
+
+
+    - name: Uruchom benchmarki dla http-native (3 powtórzenia)
       shell: ./wrk -t{{ threads }} -c{{ item.0 }} -d{{ item.1 }}s http://{{ http_native_ip }}/test.html > /home/ec2-user/wrk_output_native_c{{ item.0 }}_d{{ item.1 }}_run{{ item.2 }}.log
       args:
         chdir: /home/ec2-user/wrk
@@ -39,7 +50,7 @@
       pause:
         seconds: 5
 
-    - name: Uruchom benchmarki dla http-docker (4 powtórzenia)
+    - name: Uruchom benchmarki dla http-docker (3 powtórzenia)
       shell: ./wrk -t{{ threads }} -c{{ item.0 }} -d{{ item.1 }}s http://{{ http_docker_ip }}/test.html > /home/ec2-user/wrk_output_docker_c{{ item.0 }}_d{{ item.1 }}_run{{ item.2 }}.log
       args:
         chdir: /home/ec2-user/wrk
