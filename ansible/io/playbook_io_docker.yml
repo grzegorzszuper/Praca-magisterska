@@ -26,6 +26,9 @@
         state: started
         enabled: yes
 
+    - name: Cleanup /tmp before tests
+      shell: rm -rf /tmp/*
+
     - name: Create fio definition file for each variant
       copy:
         dest: "/tmp/fio_{{ item.label }}.fio"
@@ -55,3 +58,12 @@
     - name: Upload fio result logs to S3 for each variant
       shell: aws s3 cp "/tmp/io_output_{{ item.label }}_docker.log" "{{ s3_base_path }}/io_output_{{ item.label }}_docker.log"
       loop: "{{ io_variants }}"
+
+    - name: Remove fio result logs after upload
+      file:
+        path: "/tmp/io_output_{{ item.label }}_docker.log"
+        state: absent
+      loop: "{{ io_variants }}"
+
+    - name: Remove fio data files after all tests
+      shell: rm -f /tmp/*.dat
