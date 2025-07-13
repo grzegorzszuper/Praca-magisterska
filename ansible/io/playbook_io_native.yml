@@ -5,42 +5,42 @@
 
   vars:
     s3_base_path: s3://thesis-logs-dev/io
+    io_variants:
+      - { label: "write_1M_d1", rw: "write", bs: "1M", iodepth: 1 }
+      - { label: "write_1M_d16", rw: "write", bs: "1M", iodepth: 16 }
+      - { label: "read_1M_d1", rw: "read", bs: "1M", iodepth: 1 }
+      - { label: "read_1M_d16", rw: "read", bs: "1M", iodepth: 16 }
+      - { label: "write_4k_d1", rw: "write", bs: "4k", iodepth: 1 }
+      - { label: "write_4k_d16", rw: "write", bs: "4k", iodepth: 16 }
+      - { label: "read_4k_d1", rw: "read", bs: "4k", iodepth: 1 }
+      - { label: "read_4k_d16", rw: "read", bs: "4k", iodepth: 16 }
 
   tasks:
     - name: Install fio via yum
       command: yum install -y fio
 
-    - name: Run 8 fio benchmark variants (native)
-      block:
-        - name: Create fio file for {{ label }}
-          copy:
-            dest: "/home/ec2-user/fio_{{ label }}.fio"
-            content: |
-              [benchmark]
-              name=IO Test - {{ label }}
-              filename=seq_test_{{ label }}.dat
-              ioengine=libaio
-              direct=1
-              bs={{ bs }}
-              size=1G
-              rw={{ rw }}
-              iodepth={{ iodepth }}
-              numjobs=1
-              runtime=60
-              time_based
+    - name: Create fio definition file for each variant
+      copy:
+        dest: "/home/ec2-user/fio_{{ item.label }}.fio"
+        content: |
+          [benchmark]
+          name=IO Test - {{ item.label }}
+          filename=seq_test_{{ item.label }}.dat
+          ioengine=libaio
+          direct=1
+          bs={{ item.bs }}
+          size=1G
+          rw={{ item.rw }}
+          iodepth={{ item.iodepth }}
+          numjobs=1
+          runtime=60
+          time_based
+      loop: "{{ io_variants }}"
 
-        - name: Run fio test for {{ label }}
-          shell: fio "/home/ec2-user/fio_{{ label }}.fio" > "/home/ec2-user/io_output_{{ label }}_native.log"
+    - name: Run fio test for each variant
+      shell: fio "/home/ec2-user/fio_{{ item.label }}.fio" > "/home/ec2-user/io_output_{{ item.label }}_native.log"
+      loop: "{{ io_variants }}"
 
-        - name: Upload fio log to S3
-          shell: aws s3 cp "/home/ec2-user/io_output_{{ label }}_native.log" "{{ s3_base_path }}/io_output_{{ label }}_native.log"
-
-      loop:
-        - { label: "write_1M_d1", rw: "write", bs: "1M", iodepth: 1 }
-        - { label: "write_1M_d16", rw: "write", bs: "1M", iodepth: 16 }
-        - { label: "read_1M_d1", rw: "read", bs: "1M", iodepth: 1 }
-        - { label: "read_1M_d16", rw: "read", bs: "1M", iodepth: 16 }
-        - { label: "write_4k_d1", rw: "write", bs: "4k", iodepth: 1 }
-        - { label: "write_4k_d16", rw: "write", bs: "4k", iodepth: 16 }
-        - { label: "read_4k_d1", rw: "read", bs: "4k", iodepth: 1 }
-        - { label: "read_4k_d16", rw: "read", bs: "4k", iodepth: 16 }
+    - name: Upload fio result logs to S3 for each variant
+      shell: aws s3 cp "/home/ec2-user/io_output_{{ item.label }}_native.log" "{{ s3_base_path }}/io_output_{{ item.label }}_native.log"
+      loop: "{{ io_variants }}"

@@ -6,6 +6,15 @@
   vars:
     s3_base_path: s3://thesis-logs-dev/io
     container_name: fio_test_container
+    io_variants:
+      - { label: "write_1M_d1", rw: "write", bs: "1M", iodepth: 1 }
+      - { label: "write_1M_d16", rw: "write", bs: "1M", iodepth: 16 }
+      - { label: "read_1M_d1", rw: "read", bs: "1M", iodepth: 1 }
+      - { label: "read_1M_d16", rw: "read", bs: "1M", iodepth: 16 }
+      - { label: "write_4k_d1", rw: "write", bs: "4k", iodepth: 1 }
+      - { label: "write_4k_d16", rw: "write", bs: "4k", iodepth: 16 }
+      - { label: "read_4k_d1", rw: "read", bs: "4k", iodepth: 1 }
+      - { label: "read_4k_d16", rw: "read", bs: "4k", iodepth: 16 }
 
   tasks:
     - name: Install required packages (Docker and fio)
@@ -17,38 +26,32 @@
         state: started
         enabled: yes
 
-    - name: Run 8 fio benchmark variants (docker)
-      block:
-        - name: Create fio file {{ label }}
-          copy:
-            dest: "/tmp/fio_{{ label }}.fio"
-            content: |
-              [benchmark]
-              name=IO Test - {{ label }}
-              filename=/mnt/test_{{ label }}.dat
-              ioengine=libaio
-              direct=1
-              bs={{ bs }}
-              size=1G
-              rw={{ rw }}
-              iodepth={{ iodepth }}
-              numjobs=1
-              runtime=60
-              time_based
+    - name: Create fio definition file for each variant
+      copy:
+        dest: "/tmp/fio_{{ item.label }}.fio"
+        content: |
+          [benchmark]
+          name=IO Test - {{ item.label }}
+          filename=/mnt/test_{{ item.label }}.dat
+          ioengine=libaio
+          direct=1
+          bs={{ item.bs }}
+          size=1G
+          rw={{ item.rw }}
+          iodepth={{ item.iodepth }}
+          numjobs=1
+          runtime=60
+          time_based
+      loop: "{{ io_variants }}"
 
-        - name: Run fio test in Docker for {{ label }}
-          shell: |
-            docker run --rm --name {{ container_name }}_{{ label }}               -v /tmp:/mnt               amazonlinux:2               sh -c "yum install -y fio > /dev/null && fio /mnt/fio_{{ label }}.fio > /mnt/io_output_{{ label }}_docker.log"
+    - name: Run fio in Docker for each variant
+      shell: |
+        docker run --rm --name {{ container_name }}_{{ item.label }} \
+        -v /tmp:/mnt \
+        amazonlinux:2 \
+        sh -c "yum install -y fio > /dev/null && fio /mnt/fio_{{ item.label }}.fio > /mnt/io_output_{{ item.label }}_docker.log"
+      loop: "{{ io_variants }}"
 
-        - name: Upload fio output for {{ label }} to S3
-          shell: aws s3 cp "/tmp/io_output_{{ label }}_docker.log" "{{ s3_base_path }}/io_output_{{ label }}_docker.log"
-
-      loop:
-        - { label: "write_1M_d1", rw: "write", bs: "1M", iodepth: 1 }
-        - { label: "write_1M_d16", rw: "write", bs: "1M", iodepth: 16 }
-        - { label: "read_1M_d1", rw: "read", bs: "1M", iodepth: 1 }
-        - { label: "read_1M_d16", rw: "read", bs: "1M", iodepth: 16 }
-        - { label: "write_4k_d1", rw: "write", bs: "4k", iodepth: 1 }
-        - { label: "write_4k_d16", rw: "write", bs: "4k", iodepth: 16 }
-        - { label: "read_4k_d1", rw: "read", bs: "4k", iodepth: 1 }
-        - { label: "read_4k_d16", rw: "read", bs: "4k", iodepth: 16 }
+    - name: Upload fio result logs to S3 for each variant
+      shell: aws s3 cp "/tmp/io_output_{{ item.label }}_docker.log" "{{ s3_base_path }}/io_output_{{ item.label }}_docker.log"
+      loop: "{{ io_variants }}"
