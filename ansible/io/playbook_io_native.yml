@@ -22,44 +22,8 @@
     - name: Cleanup old fio and log files before tests
       shell: rm -f /home/ec2-user/*.dat /home/ec2-user/*.log /home/ec2-user/*.fio
 
-    - name: Execute FIO test per variant with upload and cleanup
-      block:
-        - name: Create fio definition file for {{ item.label }}
-          copy:
-            dest: "/home/ec2-user/fio_{{ item.label }}.fio"
-            content: |
-              [benchmark]
-              name=IO Test - {{ item.label }}
-              filename=seq_test_{{ item.label }}.dat
-              ioengine=libaio
-              direct=1
-              bs={{ item.bs }}
-              size=1G
-              rw={{ item.rw }}
-              iodepth={{ item.iodepth }}
-              numjobs=1
-              runtime=60
-              time_based
-
-        - name: Run fio test for {{ item.label }}
-          shell: fio "/home/ec2-user/fio_{{ item.label }}.fio" > "/home/ec2-user/io_output_{{ item.label }}_native.log"
-
-        - name: Upload fio result log to S3 for {{ item.label }}
-          shell: aws s3 cp "/home/ec2-user/io_output_{{ item.label }}_native.log" "{{ s3_base_path }}/io_output_{{ item.label }}_native.log"
-
-        - name: Remove fio log file after upload for {{ item.label }}
-          file:
-            path: "/home/ec2-user/io_output_{{ item.label }}_native.log"
-            state: absent
-
-        - name: Remove fio data file after test for {{ item.label }}
-          file:
-            path: "/home/ec2-user/seq_test_{{ item.label }}.dat"
-            state: absent
-
-        - name: Remove fio definition file after test for {{ item.label }}
-          file:
-            path: "/home/ec2-user/fio_{{ item.label }}.fio"
-            state: absent
-
+    - name: Run FIO test and cleanup per variant
+      include_tasks: fio_variant.yml
       loop: "{{ io_variants }}"
+      loop_control:
+        loop_var: item

@@ -1,0 +1,41 @@
+- name: Create fio definition file for {{ item.label }}
+  copy:
+    dest: "/tmp/fio_{{ item.label }}.fio"
+    content: |
+      [benchmark]
+      name=IO Test - {{ item.label }}
+      filename=/mnt/test_{{ item.label }}.dat
+      ioengine=libaio
+      direct=1
+      bs={{ item.bs }}
+      size=1G
+      rw={{ item.rw }}
+      iodepth={{ item.iodepth }}
+      numjobs=1
+      runtime=60
+      time_based
+
+- name: Run fio in Docker for {{ item.label }}
+  shell: |
+    docker run --rm --name {{ container_name }}_{{ item.label }} \
+    -v /tmp:/mnt \
+    amazonlinux:2 \
+    sh -c "yum install -y fio > /dev/null && fio /mnt/fio_{{ item.label }}.fio > /mnt/io_output_{{ item.label }}_docker.log"
+
+- name: Upload fio result log to S3 for {{ item.label }}
+  shell: aws s3 cp "/tmp/io_output_{{ item.label }}_docker.log" "{{ s3_base_path }}/io_output_{{ item.label }}_docker.log"
+
+- name: Remove fio result log after upload for {{ item.label }}
+  file:
+    path: "/tmp/io_output_{{ item.label }}_docker.log"
+    state: absent
+
+- name: Remove fio data file after test for {{ item.label }}
+  file:
+    path: "/tmp/test_{{ item.label }}.dat"
+    state: absent
+
+- name: Remove fio definition file after test for {{ item.label }}
+  file:
+    path: "/tmp/fio_{{ item.label }}.fio"
+    state: absent
