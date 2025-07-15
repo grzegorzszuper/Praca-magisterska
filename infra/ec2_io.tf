@@ -1,14 +1,3 @@
-# Szukamy najnowszego Amazon Linux 2 AMI – unikalna nazwa zasobu (dla I/O)
-data "aws_ami" "amazonlinux2_io" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
 resource "aws_instance" "io_native" {
   ami                         = data.aws_ami.amazonlinux2_io.id
   instance_type               = var.instance_type

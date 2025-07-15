@@ -1,5 +1,3 @@
-
-
 resource "aws_instance" "pg_docker" {
   ami                         = data.aws_ami.amazonlinux2.id
   instance_type               = var.instance_type
