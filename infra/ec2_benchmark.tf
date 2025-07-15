@@ -1,16 +1,4 @@
 # infra/native.tf
-
-# 1. Pobranie najnowszego Amazon Linux 2 AMI
-data "aws_ami" "amazonlinux2" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
 # 3. Pobranie domyślnego subnetu (dla default VPC)
 data "aws_subnet" "default" {
   default_for_az = true
